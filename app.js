@@ -1,3 +1,7 @@
+if(process.env.NODE_ENV !="production"){
+  require("dotenv").config();
+}
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -7,7 +11,7 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require('./utils/ExpressError.js');
 const session = require("express-session")
 const flash = require("connect-flash");
-const passport = require("passport")
+const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 
@@ -47,9 +51,9 @@ const sessionOptions = {
   },
 };
 
-app.get("/", (req, res) => {
-  res.send("Hi, I am root");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hi, I am root");
+// });
 
 
 app.use(session(sessionOptions));
