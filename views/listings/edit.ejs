@@ -1,65 +1,95 @@
 <% layout("/layouts/boilerplate") %>
+
 <div class="row mt-3">
   <div class="col-8 offset-2">
     <h3>Edit your Listing</h3>
-    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
+    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" 
+          novalidate class="needs-validation" enctype="multipart/form-data">
 
+      <!-- Title -->
       <div class="mb-3">
-      <label for="title" class="form-label">Title</label>
-      <input name="listing[title]" value="<%= listing.title %>" type="text" class="form-control"  required/>
-      <div class="valid-feedback">Title looks good!</div>
+        <label for="title" class="form-label">Title</label>
+        <input name="listing[title]" value="<%= listing.title %>" 
+               type="text" class="form-control" required/>
+        <div class="valid-feedback">Title looks good!</div>
       </div>
 
+      <!-- Description -->
       <div class="mb-3">
-      <label for="description" class="form-label">Description</label>
-      <textarea name="listing[description]" class="form-control" required>
-        <%= listing.description %></textarea>
+        <label for="description" class="form-label">Description</label>
+        <textarea name="listing[description]" class="form-control" required>
+          <%= listing.description %>
+        </textarea>
         <div class="invalid-feedback">Please enter a short description</div>
       </div>
-  
 
+      <!-- Original Image Display (Unchanged as Requested) -->
       <div class="mb-3">
-        Original  Listing Image <br>
-        <img src="<%= originalImageUrl %>" alt="">
+        Original Listing Image <br>
+        <img src="<%= originalImageUrl %>" alt="listing image">
+      </div>
+
+      <!-- Image Upload -->
+      <div class="mb-3">
+        <label for="image" class="form-label">Upload New Image</label>
+        <input name="listing[image]" type="file" class="form-control" />
+      </div>
+
+      <!-- Price -->
+      <div class="row">
+        <div class="mb-3 col-md-4">
+          <label for="price" class="form-label">Price</label>
+          <input name="listing[price]" value="<%= listing.price %>" 
+                 class="form-control" type="number" required />
+          <div class="invalid-feedback">Price should be valid</div>  
         </div>
 
+        <!-- Country -->
+        <div class="mb-3 col-md-8">
+          <label for="country" class="form-label">Country</label>
+          <input name="listing[country]" value="<%= listing.country %>" 
+                 type="text" class="form-control" required />
+          <div class="invalid-feedback">Country name should be valid</div>
+        </div>
+      </div>
 
+      <!-- Location -->
       <div class="mb-3">
-      <label for="image" class="form-label">Upload New Image</label>
-      <input name="listing[image]"  type="file" class="form-control"  required/>
-      <!-- <div class="invalid-feedback">Please enter a valid link for image</div> -->
+        <label for="location" class="form-label">Location</label>
+        <input name="listing[location]" value="<%= listing.location %>" 
+               type="text" class="form-control" required />
+        <div class="invalid-feedback">Location should be valid</div>
       </div>
 
-      <div class="row">
-      <div class="mb-3 col-md-4">
-      <label for="price" class="form-label">Price</label>
-      <input name="listing[price]" value="<%= listing.price %>"  class="form-control" type="number" required />
-      <div class="invalid-feedback">Price should be valid</div>  
-    </div>
+      <!-- Hidden Fields for Geometry (Required for MapTiler) -->
+      <input type="hidden" name="listing[geometry][type]" value="<%= listing.geometry.type %>" />
+      <input type="hidden" name="listing[geometry][coordinates][]" value="<%= listing.geometry.coordinates[0] %>" />
+      <input type="hidden" name="listing[geometry][coordinates][]" value="<%= listing.geometry.coordinates[1] %>" />
 
-      <div class="mb-3 col-md-8">
-      <label for="country" class="form-label">Country</label>
-      <input
-        name="listing[country]"
-        value="<%= listing.country %>"
-        type="text" class="form-control" required
-      />
-      <div class="invalid-feedback">Country name should be valid</div>
-      </div>
-      </div>
-
-      <div class="mb-3">
-      <label for="location" class="form-label">Location</label>
-      <input
-        name="listing[location]"
-        value="<%= listing.location %>"
-        type="text" class="form-control" required
-      />
-      <div class="invalid-feedback">Location should be valid</div>
-      </div>
+      <!-- Submit Button -->
       <button class="btn btn-dark edit-btn mt-3">Edit</button>
       <br><br>
     </form>
   </div>
 </div>
-<script src="/js/script.js"></script>
+
+<!-- Dynamic Geocoding Script for MapTiler Integration -->
+<script>
+  document.querySelector('input[name="listing[location]"]').addEventListener('blur', async function () {
+      const location = this.value.trim();
+      if (!location) return;
+
+      try {
+          const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(location)}.json?key=<%= process.env.MAP_TOKEN %>`);
+          const data = await response.json();
+
+          if (data.features && data.features.length > 0) {
+              const [lng, lat] = data.features[0].geometry.coordinates;
+              document.querySelector('input[name="listing[geometry][coordinates][]"]').value = lng;
+              document.querySelectorAll('input[name="listing[geometry][coordinates][]"]')[1].value = lat;
+          }
+      } catch (error) {
+          console.error('Geocoding error:', error);
+      }
+  });
+</script>
